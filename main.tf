@@ -1,9 +1,9 @@
 resource "aws_lambda_function" "test_lambda" {
   description = "Lambda function to stop start EC2 instances"
   filename      = "files/ec2-stop-start.zip"
-  function_name = "lambda_function_name"
+  function_name = var.lambda_name
   role          = var.iam_role
-  handler       = "exports.test"
+  handler       = "ec2-stop-start.lambda_handler"
 
   # The filebase64sha256() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
@@ -42,14 +42,14 @@ resource "aws_lambda_function" "test_lambda" {
 #   arn       = "${join("", concat(aws_lambda_function.lambda_vpc.*.arn, aws_lambda_function.lambda_classic.*.arn))}"
 # }
 
-resource "aws_cloudwatch_event_rule" "console" {
-  name        = "capture-aws-sign-in"
-  description = "Capture each AWS Console Sign In"
-  schedule_expression = "cron(0 20 * * ? *)"
+resource "aws_cloudwatch_event_rule" "cwevent" {
+  name        = var.cloudwatch_event_name
+  description = var.cloudwatch_event_description
+  schedule_expression = var.cloudwatch_event_schedule_expression
 }
 
-resource "aws_cloudwatch_event_target" "sns" {
-  rule      = aws_cloudwatch_event_rule.console.name
+resource "aws_cloudwatch_event_target" "cwtarget" {
+  rule      = aws_cloudwatch_event_rule.cwevent.name
   target_id = "server-stop"
   arn       = aws_lambda_function.test_lambda.arn
 }
